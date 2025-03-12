@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChatGPT</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="bg-gray-800 px-6 py-4 text-white flex justify-between items-center">
+        <div class="text-xl font-semibold">Blogger</div>
+        <nav>
+            <ul class="flex space-x-4">
+                <li><a href="./index.html" class="hover:text-yellow-500">Home</a></li>
+                <li><a href="./apps/comics.html" class="hover:text-yellow-500">Comics</a></li>
+                <li><a href="./apps/stories.html" class="hover:text-yellow-500">Stories</a></li>
+                <li><a href="./apps/videos.html" class="hover:text-yellow-500">Videos</a></li>
+                <li><a href="./apps/tools.html" class="hover:text-yellow-500">Tools</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto p-6">
+        <h1 class="text-2xl font-bold mb-4">ChatGPT-4o</h1>
+        <div class="bg-white p-6 rounded-lg shadow-md">
+            <div id="chat-box" class="h-64 overflow-y-auto mb-4 border p-4 rounded-lg">
+                <!-- Tin nhắn sẽ được hiển thị ở đây -->
+            </div>
+            <div class="flex space-x-4">
+                <input type="text" id="user-input" placeholder="Nhập tin nhắn..." class="w-full p-2 border rounded">
+                <button onclick="sendMessage()" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Gửi</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 px-6 py-4 text-white flex justify-center items-center">
+        <div class="text-sm">© 2026 Blogger. All rights reserved</div>
+    </footer>
+
+    <script>
+        async function sendMessage() {
+            const userInput = document.getElementById('user-input').value;
+            if (!userInput) return;
+
+            // Hiển thị tin nhắn của người dùng
+            const chatBox = document.getElementById('chat-box');
+            chatBox.innerHTML += `<div class="text-right mb-2">${userInput}</div>`;
+
+            // Gửi tin nhắn đến server
+            try {
+                const response = await fetch('/api/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ message: userInput }),
+                });
+
+                const data = await response.json();
+                if (data.message) {
+                    // Hiển thị phản hồi từ GPT-4o
+                    chatBox.innerHTML += `<div class="text-left mb-2">${data.message}</div>`;
+                } else if (data.error) {
+                    alert("Có lỗi xảy ra: " + data.error);
+                }
+            } catch (error) {
+                console.error("Lỗi khi gọi API:", error);
+                alert("Có lỗi xảy ra khi gửi tin nhắn.");
+            }
+
+            // Xóa nội dung input
+            document.getElementById('user-input').value = '';
+        }
+    </script>
+</body>
+</html>

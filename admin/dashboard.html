@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Blogger</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="../css/styles.css" rel="stylesheet">
+    <!-- TinyMCE -->
+    <script src="https://cdn.tiny.cloud/1/hh7qh0l67eytee0ghyjalqlcm8wrc0gmun8w9arsi7gypt8n/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+    <script>
+        tinymce.init({
+            selector: '#postContent',
+            plugins: [
+                'anchor', 'autolink', 'charmap', 'codesample', 'emoticons', 'image', 'link', 'lists', 'media', 'searchreplace', 'table', 'visualblocks', 'wordcount',
+                'checklist', 'mediaembed', 'casechange', 'export', 'formatpainter', 'pageembed', 'a11ychecker', 'tinymcespellchecker', 'permanentpen', 'powerpaste', 'advtable', 'advcode', 'editimage', 'advtemplate', 'ai', 'mentions', 'tinycomments', 'tableofcontents', 'footnotes', 'mergetags', 'autocorrect', 'typography', 'inlinecss', 'markdown','importword', 'exportword', 'exportpdf'
+            ],
+            toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | addcomment showcomments | spellcheckdialog a11ycheck typography | align lineheight | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+            tinycomments_mode: 'embedded',
+            tinycomments_author: 'Author name',
+            mergetags_list: [
+                { value: 'First.Name', title: 'First Name' },
+                { value: 'Email', title: 'Email' },
+            ],
+            ai_request: (request, respondWith) => respondWith.string(() => Promise.reject('See docs to implement AI Assistant')),
+        });
+    </script>
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="bg-gray-800 text-white py-4 px-6 flex justify-between items-center">
+        <h1 class="text-2xl font-bold">Admin Dashboard</h1>
+        <nav>
+            <ul class="flex space-x-4">
+                <li><a href="#" class="hover:text-yellow-500">Dashboard</a></li>
+                <li><a href="#" class="hover:text-yellow-500">Settings</a></li>
+                <li><button id="logoutBtn" class="hover:text-yellow-500">Logout</button></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Quản lý bài viết -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-4">Quản lý bài viết</h2>
+                <form id="postForm">
+                    <input type="text" id="postTitle" placeholder="Tiêu đề bài viết" class="w-full p-2 mb-4 border rounded">
+                    <textarea id="postContent" placeholder="Nội dung bài viết" class="w-full p-2 mb-4 border rounded"></textarea>
+                    <input type="text" id="postThumbnail" placeholder="URL hình ảnh thumbnail" class="w-full p-2 mb-4 border rounded">
+                    <input type="text" id="postVideo" placeholder="URL video (nếu có)" class="w-full p-2 mb-4 border rounded">
+                    <select id="postTier" class="w-full p-2 mb-4 border rounded">
+                        <option value="0">Mở khóa cho tất cả</option>
+                        <option value="1">Gói Cơ Bản</option>
+                        <option value="2">Gói Nâng Cao</option>
+                        <option value="3">Gói Cao Cấp</option>
+                    </select>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Đăng bài</button>
+                </form>
+            </div>
+
+            <!-- Quản lý Tiers Plan -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-4">Quản lý Tiers Plan</h2>
+                <form id="tierForm">
+                    <input type="text" id="tierName" placeholder="Tên gói" class="w-full p-2 mb-4 border rounded">
+                    <input type="number" id="tierPrice" placeholder="Giá (USD)" class="w-full p-2 mb-4 border rounded">
+                    <textarea id="tierBenefits" placeholder="Lợi ích (mỗi lợi ích trên một dòng)" class="w-full p-2 mb-4 border rounded"></textarea>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Thêm gói</button>
+                </form>
+                <div id="tiersList" class="mt-4">
+                    <!-- Danh sách các gói đăng ký sẽ được hiển thị ở đây -->
+                </div>
+            </div>
+
+            <!-- Thiết kế banner và avatar -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-4">Thiết kế banner & avatar</h2>
+                <form id="bannerAvatarForm">
+                    <div class="mb-4">
+                        <label for="coverImage" class="block text-sm font-medium text-gray-700">Cover Image</label>
+                        <input type="file" id="coverImage" class="mt-1 block w-full" accept="image/*">
+                        <img id="coverImagePreview" src="" alt="Cover Preview" class="mt-2 w-full h-32 object-cover rounded-lg hidden">
+                    </div>
+                    <div class="mb-4">
+                        <label for="avatarImage" class="block text-sm font-medium text-gray-700">Avatar Image</label>
+                        <input type="file" id="avatarImage" class="mt-1 block w-full" accept="image/*">
+                        <img id="avatarImagePreview" src="" alt="Avatar Preview" class="mt-2 w-32 h-32 object-cover rounded-full hidden">
+                    </div>
+                    <div class="mb-4">
+                        <label for="bio" class="block text-sm font-medium text-gray-700">Mô tả ngắn</label>
+                        <textarea id="bio" class="w-full p-2 border rounded"></textarea>
+                    </div>
+                    <button type="submit" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Lưu</button>
+                </form>
+            </div>
+
+            <!-- Quản lý thành viên -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-4">Quản lý thành viên</h2>
+                <button class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Xem danh sách</button>
+                <button class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 ml-2">Xóa thành viên</button>
+            </div>
+
+            <!-- Cài đặt thanh toán PayPal -->
+            <div class="bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-4">Cài đặt thanh toán</h2>
+                <input type="text" id="paypalClientId" placeholder="PayPal Client ID" class="w-full p-2 mb-4 border rounded">
+                <button id="savePaypalSettings" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Lưu cài đặt</button>
+            </div>
+
+            <!-- Posts -->
+            <div class="bg-white p-6 rounded-lg shadow-md col-span-1 md:col-span-2 lg:col-span-3">
+                <h2 class="text-xl font-bold mb-4">Posts</h2>
+                <div id="postsList" class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <!-- Danh sách bài viết sẽ được hiển thị ở đây -->
+                </div>
+                <div id="pagination" class="mt-4 flex justify-center space-x-2">
+                    <!-- Phân trang sẽ được hiển thị ở đây -->
+                </div>
+            </div>
+
+            <!-- Biểu đồ lợi nhuận-->
+            <div class="bg-white p-6 rounded-lg shadow-md col-span-1 md:col-span-2 lg:col-span-3">
+                <h2 class="text-xl font-bold mb-4">Biểu đồ lợi nhuận</h2>
+                <div class="bg-gray-200 h-64 flex items-center justify-center">
+                    <p class="text-gray-600">Biểu đồ sẽ được hiển thị tại đây</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-4 px-6 text-center">
+        <p>© 2026 Blogger. All rights reserved.</p>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Lưu trữ thông tin banner và avatar
+        let bannerAvatarInfo = JSON.parse(localStorage.getItem("bannerAvatarInfo")) || {};
+
+        // Form tải lên banner và avatar
+        document.getElementById("bannerAvatarForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const coverImage = document.getElementById("coverImage").files[0];
+            const avatarImage = document.getElementById("avatarImage").files[0];
+            const bio = document.getElementById("bio").value;
+
+            if (coverImage || avatarImage || bio) {
+                const readerCover = new FileReader();
+                const readerAvatar = new FileReader();
+
+                if (coverImage) {
+                    readerCover.onload = function (e) {
+                        bannerAvatarInfo.coverImage = e.target.result;
+                        document.getElementById("coverImagePreview").src = e.target.result;
+                        document.getElementById("coverImagePreview").classList.remove("hidden");
+                        saveBannerAvatarInfo();
+                    };
+                    readerCover.readAsDataURL(coverImage);
+                }
+
+                if (avatarImage) {
+                    readerAvatar.onload = function (e) {
+                        bannerAvatarInfo.avatarImage = e.target.result;
+                        document.getElementById("avatarImagePreview").src = e.target.result;
+                        document.getElementById("avatarImagePreview").classList.remove("hidden");
+                        saveBannerAvatarInfo();
+                    };
+                    readerAvatar.readAsDataURL(avatarImage);
+                }
+
+                if (bio) {
+                    bannerAvatarInfo.bio = bio;
+                    document.getElementById("bio").value = bio;
+                    saveBannerAvatarInfo();
+                }
+
+                alert("Thông tin đã được lưu thành công!");
+            } else {
+                alert("Vui lòng chọn ít nhất một hình ảnh hoặc nhập mô tả.");
+            }
+        });
+
+        // Lưu thông tin vào localStorage
+        function saveBannerAvatarInfo() {
+            localStorage.setItem("bannerAvatarInfo", JSON.stringify(bannerAvatarInfo));
+        }
+
+        // Tải dữ liệu khi trang được mở
+        function loadBannerAvatarInfo() {
+            const info = JSON.parse(localStorage.getItem("bannerAvatarInfo"));
+            if (info) {
+                if (info.coverImage) {
+                    document.getElementById("coverImagePreview").src = info.coverImage;
+                    document.getElementById("coverImagePreview").classList.remove("hidden");
+                }
+                if (info.avatarImage) {
+                    document.getElementById("avatarImagePreview").src = info.avatarImage;
+                    document.getElementById("avatarImagePreview").classList.remove("hidden");
+                }
+                if (info.bio) {
+                    document.getElementById("bio").value = info.bio;
+                }
+            }
+        }
+
+        // Tải dữ liệu khi trang được tải
+        window.addEventListener("load", function () {
+            loadBannerAvatarInfo();
+        });
+
+        // Xử lý đăng xuất
+        document.getElementById("logoutBtn").addEventListener("click", function () {
+            // Xóa trạng thái đăng nhập
+            localStorage.removeItem("user");
+            // Chuyển hướng về trang chủ
+            window.location.href = "../index.html";
+        });
+
+        // Lưu trữ bài viết và gói đăng ký
+        let posts = JSON.parse(localStorage.getItem("posts")) || [];
+        let tiers = JSON.parse(localStorage.getItem("tiers")) || [];
+        let currentPage = 1;
+        const postsPerPage = 3; // Số bài viết hiển thị trên mỗi trang
+
+        // Form đăng bài viết
+        document.getElementById("postForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const postTitle = document.getElementById("postTitle").value;
+            const postContent = tinymce.get("postContent").getContent();
+            const postThumbnail = document.getElementById("postThumbnail").value;
+            const postVideo = document.getElementById("postVideo").value;
+            const postTier = document.getElementById("postTier").value;
+
+            if (postTitle && postContent) {
+                const newPost = {
+                    id: Date.now(), // Tạo ID duy nhất
+                    title: postTitle,
+                    content: postContent,
+                    thumbnail: postThumbnail,
+                    video: postVideo,
+                    tier: postTier,
+                };
+
+                // Thêm bài viết mới vào đầu mảng
+                posts.unshift(newPost);
+
+                // Khởi tạo postInteractions cho bài viết mới
+                let postInteractions = JSON.parse(localStorage.getItem("postInteractions")) || {};
+                if (!postInteractions[newPost.id]) {
+                    postInteractions[newPost.id] = {
+                        likes: new Set(), // Sử dụng Set để lưu trữ lượt like
+                        comments: [], // Mảng để lưu trữ bình luận
+                    };
+                }
+
+                // Lưu bài viết và postInteractions vào localStorage
+                savePosts();
+                localStorage.setItem("postInteractions", JSON.stringify(postInteractions, replacer)); // Sử dụng replacer để xử lý Set
+
+                // Cập nhật giao diện
+                renderPosts();
+                renderLatestPosts();
+                renderPagination();
+                document.getElementById("postForm").reset();
+                tinymce.get("postContent").setContent(""); // Xóa nội dung TinyMCE
+            } else {
+                alert("Vui lòng điền tiêu đề và nội dung bài viết.");
+            }
+        });
+
+        // Form thêm gói đăng ký
+        document.getElementById("tierForm").addEventListener("submit", function (e) {
+            e.preventDefault();
+
+            const tierName = document.getElementById("tierName").value;
+            const tierPrice = document.getElementById("tierPrice").value;
+            const tierBenefits = document.getElementById("tierBenefits").value.split("\n");
+
+            if (tierName && tierPrice && tierBenefits.length > 0) {
+                const newTier = {
+                    id: Date.now(), // Tạo ID duy nhất
+                    name: tierName,
+                    price: tierPrice,
+                    benefits: tierBenefits,
+                };
+
+                tiers.push(newTier);
+                saveTiers();
+                renderTiers();
+                document.getElementById("tierForm").reset();
+            } else {
+                alert("Vui lòng điền đầy đủ thông tin.");
+            }
+        });
+
+        // Hiển thị danh sách bài viết
+        function renderPosts() {
+            const postsList = document.getElementById("postsList");
+            const start = (currentPage - 1) * postsPerPage;
+            const end = start + postsPerPage;
+            const paginatedPosts = posts.slice(start, end);
+
+            postsList.innerHTML = paginatedPosts
+                .map(
+                    (post) => `
+                    <div class="bg-gray-100 p-4 rounded-lg mb-4">
+                        <h3 class="text-lg font-semibold">${post.title}</h3>
+                        <div class="text-sm text-gray-600">${post.content}</div>
+                        ${post.thumbnail ? `<img src="${post.thumbnail}" alt="Thumbnail" class="w-full h-32 object-cover mt-2 rounded-lg">` : ""}
+                        ${post.video ? `<div class="mt-2"><iframe src="${post.video}" class="w-full h-32" frameborder="0" allowfullscreen></iframe></div>` : ""}
+                        <p class="text-sm text-gray-600 mt-2">Yêu cầu gói: ${getTierName(post.tier)}</p>
+                        <button onclick="editPost(${post.id})" class="mt-2 bg-yellow-500 text-white px-2 py-1 rounded hover:bg-yellow-600">Chỉnh sửa</button>
+                        <button onclick="deletePost(${post.id})" class="mt-2 bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Xóa</button>
+                    </div>
+                `
+                )
+                .join("");
+        }
+
+        // Hiển thị phân trang
+        function renderPagination() {
+            const pagination = document.getElementById("pagination");
+            const totalPages = Math.ceil(posts.length / postsPerPage);
+            let paginationHTML = "";
+
+            // Các nút trang
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHTML += `
+                    <button onclick="changePage(${i})" class="px-3 py-1 rounded ${currentPage === i ? 'bg-blue-500 text-white' : 'bg-gray-200'}">${i}</button>
+                `;
+            }
+
+            // Nút "Next"
+            if (currentPage < totalPages) {
+                paginationHTML += `
+                    <button onclick="changePage(${currentPage + 1})" class="px-3 py-1 rounded bg-gray-200">Next</button>
+                `;
+            }
+
+            pagination.innerHTML = paginationHTML;
+        }
+
+        // Chuyển trang
+        function changePage(page) {
+            currentPage = page;
+            renderPosts();
+            renderPagination();
+        }
+
+        // Hiển thị danh sách gói đăng ký
+        function renderTiers() {
+            const tiersList = document.getElementById("tiersList");
+            tiersList.innerHTML = tiers
+                .map(
+                    (tier) => `
+                    <div class="bg-gray-100 p-4 rounded-lg mb-4">
+                        <h3 class="text-lg font-semibold">${tier.name} - $${tier.price}</h3>
+                        <ul class="list-disc list-inside text-sm text-gray-600 mt-2">
+                            ${tier.benefits.map((benefit) => `<li>${benefit}</li>`).join("")}
+                        </ul>
+                        <button onclick="deleteTier(${tier.id})" class="mt-2 bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">Xóa</button>
+                    </div>
+                `
+                )
+                .join("");
+        }
+
+        // Kiểm tra vai trò khi trang được tải
+        window.addEventListener("load", function () {
+            const user = JSON.parse(localStorage.getItem("user"));
+            if (!user || user.role !== "admin") {
+                // Nếu người dùng không phải là admin, chuyển hướng về trang chủ
+                alert("Bạn không có quyền truy cập trang này.");
+                window.location.href = "/blogger/index.html";
+            } else {
+                // Nếu là admin, tải dữ liệu và hiển thị trang
+                loadBannerAvatarInfo();
+                renderPagination();
+                renderPosts();
+                renderTiers();
+            }
+        });
+
+        // Chỉnh sửa bài viết
+        function editPost(id) {
+            const post = posts.find((post) => post.id === id);
+            if (post) {
+                // Điền thông tin bài viết vào form
+                document.getElementById("postTitle").value = post.title;
+                tinymce.get("postContent").setContent(post.content);
+                document.getElementById("postThumbnail").value = post.thumbnail;
+                document.getElementById("postVideo").value = post.video;
+                document.getElementById("postTier").value = post.tier;
+
+                // Xóa bài viết cũ
+                posts = posts.filter((post) => post.id !== id);
+                savePosts();
+                renderPosts();
+                renderPagination();
+            }
+        }
+
+        // Xóa bài viết
+        function deletePost(id) {
+            posts = posts.filter((post) => post.id !== id);
+            savePosts();
+            renderPosts();
+            renderPagination();
+        }
+
+        // Xóa gói đăng ký
+        function deleteTier(id) {
+            tiers = tiers.filter((tier) => tier.id !== id);
+            saveTiers();
+            renderTiers();
+        }
+
+        // Lưu bài viết vào localStorage
+        function savePosts() {
+            localStorage.setItem("posts", JSON.stringify(posts));
+        }
+
+        // Lưu gói đăng ký vào localStorage
+        function saveTiers() {
+            localStorage.setItem("tiers", JSON.stringify(tiers));
+        }
+
+        // Lấy tên gói đăng ký
+        function getTierName(tier) {
+            switch (tier) {
+                case "0":
+                    return "Mở khóa cho tất cả";
+                case "1":
+                    return "Cơ Bản";
+                case "2":
+                    return "Nâng Cao";
+                case "3":
+                    return "Cao Cấp";
+                default:
+                    return "";
+            }
+        }
+
+        // Tải dữ liệu khi trang được mở
+        renderPosts();
+        renderLatestPosts();
+        renderPagination();
+        renderTiers();
+
+        // PayPal Integration
+        document.getElementById("savePaypalSettings").addEventListener("click", function () {
+            const clientId = document.getElementById("paypalClientId").value;
+            if (clientId) {
+                localStorage.setItem("paypalClientId", clientId);
+                alert("PayPal Client ID đã được lưu.");
+            } else {
+                alert("Vui lòng nhập PayPal Client ID.");
+            }
+        });
+
+        // Hàm tạo Subscription
+        async function createSubscription(planId) {
+            const clientId = localStorage.getItem("paypalClientId");
+            if (!clientId) {
+                alert("Vui lòng nhập PayPal Client ID trong phần cài đặt.");
+                return;
+            }
+
+            const response = await fetch('/create-subscription', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ planId: planId, clientId: clientId }),
+            });
+
+            const data = await response.json();
+            if (data.id) {
+                // Lưu Subscription ID vào cơ sở dữ liệu
+                saveSubscriptionToDatabase(data.id);
+                // Chuyển hướng người dùng đến trang thanh toán của PayPal
+                window.location.href = data.links[0].href;
+            } else {
+                alert('Có lỗi xảy ra khi tạo Subscription.');
+            }
+        }
+
+        // Hàm lưu Subscription ID vào cơ sở dữ liệu
+        function saveSubscriptionToDatabase(subscriptionId) {
+            // Gửi yêu cầu đến server để lưu Subscription ID
+            fetch('/save-subscription', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ subscriptionId: subscriptionId }),
+            });
+        }
+
+        // Hàm xử lý webhook từ PayPal
+        app.post('/paypal-webhook', (req, res) => {
+            const event = req.body;
+            if (event.event_type === 'PAYMENT.SALE.COMPLETED') {
+                // Xử lý thanh toán thành công
+                handlePaymentSuccess(event.resource.billing_agreement_id);
+            } else if (event.event_type === 'PAYMENT.SALE.DENIED') {
+                // Xử lý thanh toán thất bại
+                handlePaymentFailure(event.resource.billing_agreement_id);
+            }
+            res.status(200).end();
+        });
+
+        // Hàm xử lý thanh toán thành công
+        function handlePaymentSuccess(subscriptionId) {
+            // Cập nhật ngày hết hạn của người dùng
+            updateUserExpirationDate(subscriptionId);
+        }
+
+        // Hàm xử lý thanh toán thất bại
+        function handlePaymentFailure(subscriptionId) {
+            // Thông báo cho người dùng và xử lý tùy theo chính sách
+            notifyUserOfPaymentFailure(subscriptionId);
+        }
+    </script>
+</body>
+</html>

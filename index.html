@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Blogger</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="css/styles.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        /* Custom CSS for the modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        button:hover {
+            transform: scale(1.1);
+            transition: transform 0.2s ease;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Header -->
+    <header class="bg-gray-800 px-6 py-4 text-white flex justify-between items-center">
+        <div class="text-xl font-semibold">Blogger</div>
+        <nav>
+            <ul class="flex space-x-4">
+                <li><a href="./index.html" class="hover:text-yellow-500">Home</a></li>
+                <li><a href="./apps/comics.html" class="hover:text-yellow-500">Comics</a></li>
+                <li><a href="./apps/stories.html" class="hover:text-yellow-500">Stories</a></li>
+                <li><a href="./apps/videos.html" class="hover:text-yellow-500">Videos</a></li>
+                <li><a href="./apps/tools.html" class="hover:text-yellow-500">Tools</a></li>
+            </ul>
+        </nav>
+        <div class="flex items-center space-x-4">
+            <!-- Thanh tìm kiếm -->
+            <div class="flex items-stretch flex-grow max-w-md">
+                <input type="text" placeholder="Tìm kiếm bài viết..." class="px-4 py-2 border rounded-l-lg focus:outline-none flex-grow h-10 text-black">
+                <button class="px-6 bg-blue-500 text-white rounded-r-lg hover:bg-blue-600 flex items-center justify-center h-10">
+                    <i class="fas fa-search"></i> <!-- Icon kính lúp -->
+                </button>
+            </div>
+            <!-- Phần đăng nhập/đăng ký -->
+            <div id="authSection">
+                <!-- Form đăng nhập (mặc định) -->
+                <div id="loginForm" class="flex items-center">
+                    <input type="text" id="username" placeholder="Username" class="px-2 py-1 mr-2 text-black">
+                    <input type="password" id="password" placeholder="Password" class="px-2 py-1 mr-2 text-black">
+                    <button id="loginBtn" class="px-4 py-1 bg-yellow-500 hover:bg-yellow-600 rounded text-black">Login</button>
+                    <p class="ml-2 text-white">Chưa có tài khoản? <a href="#" id="showRegisterForm" class="text-blue-500 hover:underline">Đăng ký</a></p>
+                </div>
+                <!-- Nút Panel và Logout (ẩn mặc định) -->
+                <div id="adminPanel" class="hidden">
+                    <a href="#" id="adminPanelLink" class="px-4 py-1 bg-blue-500 hover:bg-blue-600 rounded text-white">Panel</a>
+                    <span id="userName" class="px-4 py-1 text-white">${user.username}</span>
+                    <button id="logoutBtn" class="px-4 py-1 bg-red-500 hover:bg-red-600 rounded text-white ml-2">Logout</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Thumbnail Section -->
+    <div id="thumbnailSection" class="thumbnail mb-8 relative h-64" style="background-image: url('https://via.placeholder.com/1200x300'); background-size: cover; background-position: center;">
+        <!-- Avatar and Bio Section -->
+        <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
+            <img id="avatarImageElement" src="https://via.placeholder.com/100" alt="Avatar" class="w-24 h-24 rounded-full mb-4 hover:scale-110 transition-transform">
+            <p id="bioElement" class="text-white text-lg">Mô tả ngắn về bản thân</p>
+        </div>
+    </div>
+
+    <!-- Modal for Register Form -->
+    <div id="registerModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2 class="text-2xl font-bold mb-4">Đăng ký thành viên</h2>
+            <input type="text" id="registerUsername" placeholder="Tên đăng nhập" class="w-full p-2 mb-4 border rounded">
+            <input type="password" id="registerPassword" placeholder="Mật khẩu" class="w-full p-2 mb-4 border rounded">
+            <input type="email" id="registerEmail" placeholder="Email" class="w-full p-2 mb-4 border rounded">
+            <button id="registerBtn" class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">Đăng ký</button>
+            <div class="mt-4 text-center">
+                <p class="text-gray-600">Hoặc đăng ký bằng:</p>
+                <button id="googleRegisterBtn" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">Google</button>
+                <button id="githubRegisterBtn" class="px-4 py-2 bg-gray-800 text-white rounded hover:bg-gray-700 ml-2">GitHub</button>
+            </div>
+            <p class="mt-4 text-center">Đã có tài khoản? <a href="#" id="showLoginFormModal" class="text-blue-500 hover:underline">Đăng nhập</a></p>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="container mx-auto p-6">
+        <!-- Error Message -->
+        <div id="errorMessage" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-6">
+            Sai tên đăng nhập hoặc mật khẩu. Vui lòng thử lại.
+        </div>
+
+        <!-- Thumbnail Section -->
+        <div id="thumbnailSection" class="thumbnail mb-8" style="background-image: url('https://via.placeholder.com/1200x300');">
+            <!-- Thumbnail content (optional) -->
+        </div>
+
+        <!-- Layout: Bài viết bên trái, Tiers bên phải -->
+        <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Bài viết (Left) -->
+            <div class="w-full lg:w-2/3">
+                <h2 class="text-2xl font-bold mb-4">Bài viết mới nhất</h2>
+                <div class="space-y-6" id="postsContainer">
+                    <!-- Các bài viết sẽ được thêm vào đây bằng JavaScript -->
+                </div>
+                <!-- Phân trang -->
+                <div id="pagination" class="mt-6 flex justify-center space-x-2">
+                    <!-- Phân trang sẽ được thêm vào đây bằng JavaScript -->
+                </div>
+                <!-- Thông báo khi không có bài viết -->
+                <div id="noPostsMessage" class="hidden text-center text-gray-600">
+                    Hiện không có bài viết nào.
+                </div>
+            </div>
+
+            <!-- Tiers Plan (Right) -->
+            <div class="w-full lg:w-1/3">
+                <h2 class="text-2xl font-bold mb-4">Các gói đăng ký</h2>
+                <div class="space-y-6" id="tiersContainer">
+                    <!-- Các gói đăng ký sẽ được thêm vào đây bằng JavaScript -->
+                </div>
+                <!-- Thông báo khi không có gói đăng ký -->
+                <div id="noTiersMessage" class="hidden text-center text-gray-600">
+                    Hiện không có gói đăng ký nào.
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 px-6 py-4 text-white flex justify-center items-center">
+        <div class="text-sm">© 2026 Blogger. All rights reserved</div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Lưu trữ danh sách người dùng
+        let users = JSON.parse(localStorage.getItem("users")) || [];
+        let posts = JSON.parse(localStorage.getItem("posts")) || [];
+
+        // Tạo tài khoản admin mặc định nếu chưa có
+        if (!users.some(user => user.username === "admin")) {
+            const adminUser = {
+                id: Date.now(),
+                username: "admin",
+                password: "admin",
+                email: "admin@example.com",
+                role: "admin",
+                tier: 0,
+                avatar: "",
+                paymentMethods: [],
+            };
+            users.push(adminUser);
+            localStorage.setItem("users", JSON.stringify(users));
+        }
+
+        // Xử lý đăng ký
+        document.getElementById("registerBtn").addEventListener("click", function () {
+            const username = document.getElementById("registerUsername").value;
+            const password = document.getElementById("registerPassword").value;
+            const email = document.getElementById("registerEmail").value;
+
+            if (username && password && email) {
+                // Kiểm tra xem tên đăng nhập hoặc email đã tồn tại chưa
+                const isUsernameTaken = users.some(user => user.username === username);
+                const isEmailTaken = users.some(user => user.email === email);
+
+                if (isUsernameTaken) {
+                    alert("Tên đăng nhập đã tồn tại.");
+                    return;
+                }
+                if (isEmailTaken) {
+                    alert("Email đã được sử dụng.");
+                    return;
+                }
+
+                // Gán vai trò "admin" nếu tên đăng nhập là "admin"
+                const role = username === "admin" ? "admin" : "user";
+
+                const newUser = {
+                    id: Date.now(), // Tạo ID duy nhất
+                    username,
+                    password,
+                    email,
+                    role,
+                    tier: 0, // Mặc định chưa đăng ký gói
+                    avatar: "", // Avatar mặc định
+                    paymentMethods: [], // Phương thức thanh toán
+                };
+
+                // Lưu thông tin user vào localStorage
+                users.push(newUser);
+                localStorage.setItem("users", JSON.stringify(users));
+                localStorage.setItem("user", JSON.stringify(newUser)); // Đăng nhập ngay sau khi đăng ký
+                alert("Đăng ký thành công!");
+                checkLoginStatus(); // Cập nhật giao diện
+                closeModal(); // Đóng modal sau khi đăng ký thành công
+            } else {
+                alert("Vui lòng điền đầy đủ thông tin.");
+            }
+        });
+
+        // Hiển thị modal đăng ký
+        document.getElementById("showRegisterForm").addEventListener("click", function (e) {
+            e.preventDefault();
+            openModal();
+        });
+
+        // Đóng modal
+        document.querySelector(".close").addEventListener("click", function () {
+            closeModal();
+        });
+
+        // Mở modal
+        function openModal() {
+            document.getElementById("registerModal").style.display = "block";
+        }
+
+        // Đóng modal
+        function closeModal() {
+            document.getElementById("registerModal").style.display = "none";
+        }
+
+        // Kiểm tra trạng thái đăng nhập
+        function checkLoginStatus() {
+            const user = JSON.parse(localStorage.getItem("user"));
+            if (user) {
+                if (user.role === "admin") {
+                    document.getElementById("loginForm").classList.add("hidden");
+                    document.getElementById("adminPanel").classList.remove("hidden");
+                } else {
+                    document.getElementById("loginForm").classList.add("hidden");
+                    document.getElementById("adminPanel").classList.remove("hidden");
+                    document.getElementById("adminPanelLink").style.display = "none";
+                    document.getElementById("userName").textContent = user.username;
+
+                    // Kiểm tra xem người dùng đã đăng ký gói nào chưa
+                    if (user.tier) {
+                        const tierButtons = document.querySelectorAll(`button[onclick^="subscribeToTier(${user.tier}"]`);
+                        tierButtons.forEach(button => button.style.display = "none");
+                    }
+                }
+            } else {
+                document.getElementById("loginForm").classList.remove("hidden");
+                document.getElementById("adminPanel").classList.add("hidden");
+            }
+        }
+
+        // Xử lý đăng nhập
+        document.getElementById("loginBtn").addEventListener("click", function () {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+
+            // Kiểm tra thông tin đăng nhập
+            const user = users.find(user => user.username === username && user.password === password);
+
+            if (user) {
+                localStorage.setItem("user", JSON.stringify(user)); // Lưu thông tin người dùng hiện tại
+                alert("Đăng nhập thành công!");
+                checkLoginStatus(); // Cập nhật giao diện
+            } else {
+                alert("Tên đăng nhập hoặc mật khẩu không đúng.");
+            }
+        });
+
+        // Xử lý đăng xuất
+        document.getElementById("logoutBtn").addEventListener("click", function () {
+            localStorage.removeItem("user"); // Xóa thông tin người dùng hiện tại
+            checkLoginStatus(); // Cập nhật giao diện
+            renderPosts(); // Hiển thị lại bài viết
+            renderTiers(); // Hiển thị lại các gói đăng ký
+        });
+
+        // Xử lý khi nhấn vào nút "Panel"
+        document.getElementById("adminPanelLink").addEventListener("click", function (e) {
+            e.preventDefault(); // Ngăn chặn hành động mặc định của thẻ <a>
+
+            const user = JSON.parse(localStorage.getItem("user"));
+            if (user && user.role === "admin") {
+                // Chuyển hướng đến trang admin panel nếu người dùng là admin
+                window.location.href = "/blogger/admin/dashboard.html";
+            } else {
+                // Hiển thị thông báo nếu người dùng không phải là admin
+                alert("Bạn không có quyền truy cập trang admin panel.");
+            }
+        });
+
+        // Hiển thị bài viết
+        function renderPosts() {
+            const postsContainer = document.getElementById("postsContainer");
+            const noPostsMessage = document.getElementById("noPostsMessage");
+            const posts = JSON.parse(localStorage.getItem("posts")) || [];
+            const user = JSON.parse(localStorage.getItem("user"));
+
+            if (posts.length > 0) {
+                const start = (currentPage - 1) * postsPerPage;
+                const end = start + postsPerPage;
+                const paginatedPosts = posts.slice(start, end);
+
+                postsContainer.innerHTML = paginatedPosts
+                    .map((post) => {
+                        // Kiểm tra xem người dùng có quyền xem bài viết không
+                        const canViewPost = user?.role === "admin" || post.tier === "0" || (user?.tier && post.tier <= user.tier);
+
+                        // Đảm bảo postInteractions[post.id] tồn tại
+                        if (!postInteractions[post.id]) {
+                            postInteractions[post.id] = { likes: new Set(), comments: [] };
+                        }
+
+                        // Lấy số lượt like và bình luận
+                        const likes = postInteractions[post.id].likes.size || 0;
+                        const comments = postInteractions[post.id].comments || [];
+
+                        return `
+                            <div class="bg-white p-6 rounded-lg shadow-md">
+                                <!-- Thumbnail -->
+                                ${post.thumbnail ? `<img src="${post.thumbnail}" alt="Thumbnail" class="w-full h-48 object-cover mb-4 rounded-lg">` : ""}
+                                <!-- Tiêu đề và nội dung -->
+                                <h3 class="text-xl font-semibold mb-2">${post.title}</h3>
+                                ${canViewPost ? `<p class="text-gray-700">${post.content}</p>` : ""}
+                                <!-- Video -->
+                                ${canViewPost && post.video ? `<div class="mt-4"><iframe src="${post.video}" class="w-full h-64" frameborder="0" allowfullscreen></iframe></div>` : ""}
+                                <!-- Khóa bài viết theo Tiers Plan -->
+                                ${!canViewPost ? `
+                                    <div class="mt-4 bg-yellow-100 p-4 rounded-lg text-yellow-700">
+                                        Bài viết này yêu cầu gói đăng ký <strong>${getTierName(post.tier)}</strong>.
+                                    </div>
+                                ` : ""}
+                                <!-- Nút Like và bình luận -->
+                                ${canViewPost ? `
+                                    <div class="mt-4 flex justify-between items-center">
+                                        <div class="flex items-center space-x-4">
+                                            <button onclick="toggleLike(${post.id})" class="flex items-center space-x-1 text-red-500 hover:text-red-600">
+                                                <span>❤️</span>
+                                                <span>${likes}</span>
+                                            </button>
+                                            <button onclick="toggleCommentSection(${post.id})" class="flex items-center space-x-1 text-blue-500 hover:text-blue-600">
+                                                <span>💬</span>
+                                                <span>${comments.length}</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <!-- Khung bình luận -->
+                                    <div id="commentSection-${post.id}" class="hidden mt-4">
+                                        <textarea id="commentInput-${post.id}" class="w-full p-2 border rounded" placeholder="Viết bình luận..."></textarea>
+                                        <button onclick="submitComment(${post.id})" class="mt-2 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Gửi</button>
+                                        <!-- Danh sách bình luận -->
+                                        <div class="mt-4">
+                                            ${renderComments(post.id)}
+                                        </div>
+                                    </div>
+                                ` : ""}
+                            </div>
+                        `;
+                    })
+                    .join("");
+                noPostsMessage.classList.add("hidden");
+            } else {
+                postsContainer.innerHTML = "";
+                noPostsMessage.classList.remove("hidden");
+            }
+        }
+
+        // ẩn bình luận
+        function toggleCommentSection(postId) {
+            const commentSection = document.getElementById(`commentSection-${postId}`);
+            if (commentSection) {
+                commentSection.classList.toggle("hidden");
+                if (!commentSection.classList.contains("hidden")) {
+                    commentSection.scrollIntoView({ behavior: "smooth", block: "start" });
+                }
+            }
+        }
+
+        // Thêm bình luận
+        function submitComment(postId) {
+            const commentInput = document.getElementById(`commentInput-${postId}`);
+            if (commentInput && commentInput.value.trim()) {
+                addComment(postId, commentInput.value.trim());
+                commentInput.value = ""; // Xóa nội dung sau khi gửi
+            }
+        }
+
+        // Phân trang
+        let currentPage = 1;
+        const postsPerPage = 4; // Hiển thị 4 bài viết mỗi trang
+
+        function renderPagination() {
+            const pagination = document.getElementById("pagination");
+            const totalPages = Math.ceil(posts.length / postsPerPage);
+            let paginationHTML = "";
+
+            // Nút "Previous"
+            if (currentPage > 1) {
+                paginationHTML += `
+                    <button onclick="changePage(${currentPage - 1})" class="px-3 py-1 rounded bg-gray-200">Previous</button>
+                `;
+            }
+
+            // Các nút trang
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHTML += `
+                    <button onclick="changePage(${i})" class="px-3 py-1 rounded ${currentPage === i ? 'bg-blue-500 text-white' : 'bg-gray-200'}">${i}</button>
+                `;
+            }
+
+            // Nút "Next"
+            if (currentPage < totalPages) {
+                paginationHTML += `
+                    <button onclick="changePage(${currentPage + 1})" class="px-3 py-1 rounded bg-gray-200">Next</button>
+                `;
+            }
+
+            pagination.innerHTML = paginationHTML;
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderPosts();
+            renderPagination();
+        }
+
+        // Hiển thị các gói đăng ký
+        function renderTiers() {
+            const tiersContainer = document.getElementById("tiersContainer");
+            const noTiersMessage = document.getElementById("noTiersMessage");
+            const tiers = JSON.parse(localStorage.getItem("tiers")) || [];
+            const user = JSON.parse(localStorage.getItem("user"));
+
+            if (tiers.length > 0) {
+                tiersContainer.innerHTML = tiers
+                    .map(
+                        (tier) => `
+                        <div class="bg-white p-6 rounded-lg shadow-md">
+                            <h3 class="text-xl font-semibold mb-2">${tier.name} - $${tier.price}</h3>
+                            <ul class="list-disc list-inside text-sm text-gray-600 mt-2">
+                                ${tier.benefits.map((benefit) => `<li>${benefit}</li>`).join("")}
+                            </ul>
+                            ${user?.role !== "admin" ? `
+                                <button onclick="subscribeToTier(${tier.id}, ${tier.price})" class="mt-4 w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">Đăng ký</button>
+                            ` : ""}
+                        </div>
+                    `
+                    )
+                    .join("");
+                noTiersMessage.classList.add("hidden");
+            } else {
+                tiersContainer.innerHTML = "";
+                noTiersMessage.classList.remove("hidden");
+            }
+        }
+
+        // Lưu gói đăng ký của user
+        function subscribeToTier(tierId, price) {
+            const user = JSON.parse(localStorage.getItem("user"));
+            if (!user) {
+                alert("Vui lòng đăng nhập để đăng ký gói.");
+                return;
+            }
+
+            // Kiểm tra dữ liệu đầu vào
+            if (!tierId || !price || price <= 0) {
+                alert("Thông tin gói đăng ký không hợp lệ.");
+                return;
+            }
+
+            // Hiển thị loading state (ví dụ: disable nút đăng ký hoặc hiển thị spinner)
+            const subscribeButton = document.querySelector(`button[onclick*="subscribeToTier(${tierId}"]`);
+            if (subscribeButton) {
+                subscribeButton.disabled = true;
+                subscribeButton.textContent = "Đang xử lý...";
+            }
+
+            // Gọi API thanh toán
+            fetch('/api/payment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ tierId: tierId, price: price, userId: user.id }),
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Lỗi HTTP: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.success) {
+                    // Cập nhật trạng thái người dùng sau khi thanh toán thành công
+                    user.tier = tierId;
+                    localStorage.setItem("user", JSON.stringify(user));
+
+                    // Chuyển hướng đến trang thank-you.html
+                    window.location.href = "/thank-you.html";
+                } else {
+                    // Hiển thị thông báo lỗi từ server (nếu có)
+                    alert(data.message || "Thanh toán thất bại. Vui lòng thử lại.");
+                }
+            })
+            .catch(error => {
+                console.error("Lỗi khi gọi API thanh toán:", error);
+                alert("Có lỗi xảy ra khi thực hiện thanh toán. Vui lòng thử lại sau.");
+            })
+            .finally(() => {
+                // Ẩn loading state (ví dụ: enable lại nút đăng ký)
+                if (subscribeButton) {
+                    subscribeButton.disabled = false;
+                    subscribeButton.textContent = "Đăng ký";
+                }
+            });
+        }
+
+        // Lấy tên gói đăng ký
+        function getTierName(tier) {
+            switch (tier) {
+                case "0":
+                    return "Mở khóa cho tất cả";
+                case "1":
+                    return "Cơ Bản";
+                case "2":
+                    return "Nâng Cao";
+                case "3":
+                    return "Cao Cấp";
+                default:
+                    return "";
+            }
+        }
+
+        // Hàm hiển thị thông tin banner và avatar
+        function renderBannerAvatarInfo() {
+            // Lấy dữ liệu từ localStorage
+            const bannerAvatarInfo = JSON.parse(localStorage.getItem("bannerAvatarInfo")) || {};
+
+            // Hiển thị cover image
+            const thumbnailSection = document.getElementById("thumbnailSection");
+            if (bannerAvatarInfo.coverImage) {
+                thumbnailSection.style.backgroundImage = `url('${bannerAvatarInfo.coverImage}')`;
+            } else {
+                thumbnailSection.style.backgroundImage = "url('https://via.placeholder.com/1200x300')";
+            }
+
+            // Hiển thị avatar
+            const avatarImageElement = document.getElementById("avatarImageElement");
+            if (bannerAvatarInfo.avatarImage) {
+                avatarImageElement.src = bannerAvatarInfo.avatarImage;
+            } else {
+                avatarImageElement.src = "https://via.placeholder.com/100";
+            }
+
+            // Hiển thị mô tả
+            const bioElement = document.getElementById("bioElement");
+            if (bannerAvatarInfo.bio) {
+                bioElement.textContent = bannerAvatarInfo.bio;
+            } else {
+                bioElement.textContent = "Mô tả ngắn về bản thân";
+            }
+        }
+
+        // Lưu trữ thông tin Like và bình luận
+        let postInteractions = JSON.parse(localStorage.getItem("postInteractions")) || {};
+
+        // Hàm thêm/xóa Like
+        function toggleLike(postId) {
+            const user = JSON.parse(localStorage.getItem("user"));
+            if (!user) {
+                Swal.fire("Vui lòng đăng nhập để thích bài viết.");
+                return;
+            }
+
+            // Đảm bảo postInteractions[postId] tồn tại và likes là Set
+            if (!postInteractions[postId]) {
+                postInteractions[postId] = {
+                    likes: new Set(),
+                    comments: [],
+                };
+            }
+
+            if (!(postInteractions[postId].likes instanceof Set)) {
+                postInteractions[postId].likes = new Set(postInteractions[postId].likes);
+            }
+
+            const likes = postInteractions[postId].likes;
+            if (likes.has(user.id)) {
+                likes.delete(user.id);
+            } else {
+                likes.add(user.id);
+            }
+
+            localStorage.setItem("postInteractions", JSON.stringify(postInteractions, replacer));
+            renderPosts();
+        }
+
+        function addComment(postId, commentText) {
+            const user = JSON.parse(localStorage.getItem("user"));
+            if (!user) {
+                Swal.fire("Vui lòng đăng nhập để bình luận.");
+                return;
+            }
+
+            // Đảm bảo postInteractions[postId] tồn tại
+            if (!postInteractions[postId]) {
+                postInteractions[postId] = {
+                    likes: new Set(),
+                    comments: [],
+                };
+            }
+
+            // Tạo bình luận mới
+            const comment = {
+                id: Date.now(), // Tạo ID duy nhất cho bình luận
+                userId: user.id,
+                username: user.username,
+                text: commentText,
+                timestamp: new Date().toLocaleString(), // Thêm thời gian bình luận
+            };
+
+            // Thêm bình luận vào mảng comments
+            postInteractions[postId].comments.push(comment);
+
+            // Lưu lại postInteractions vào localStorage
+            localStorage.setItem("postInteractions", JSON.stringify(postInteractions, replacer));
+
+            // Cập nhật giao diện
+            renderPosts();
+        }
+
+        // Hàm hiển thị bình luận
+        function renderComments(postId) {
+            const comments = postInteractions[postId]?.comments || [];
+            const user = JSON.parse(localStorage.getItem("user"));
+
+            return comments
+                .map(
+                    (comment) => `
+                        <div class="mt-4 p-4 bg-gray-100 rounded-lg">
+                            <p class="text-sm font-semibold">${comment.username}</p>
+                            ${user?.id === comment.userId ? `
+                                <textarea id="editComment-${comment.id}" class="w-full p-2 border rounded hidden">${comment.text}</textarea>
+                                <p class="text-sm text-gray-600" id="commentText-${comment.id}">${comment.text}</p>
+                            ` : `<p class="text-sm text-gray-600">${comment.text}</p>`}
+                            <p class="text-xs text-gray-400 mt-1">${comment.timestamp}</p>
+                            ${user?.id === comment.userId ? `
+                                <button onclick="editComment(${postId}, ${comment.id})" class="text-blue-500 text-xs hover:text-blue-600">Chỉnh sửa</button>
+                                <button onclick="saveComment(${postId}, ${comment.id})" class="text-green-500 text-xs hover:text-green-600 hidden" id="saveButton-${comment.id}">Lưu</button>
+                                <button onclick="deleteComment(${postId}, ${comment.id})" class="text-red-500 text-xs hover:text-red-600">Xóa</button>
+                            ` : ""}
+                        </div>
+                    `
+                )
+                .join("");
+        }
+
+        function editComment(postId, commentId) {
+            const commentText = document.getElementById(`commentText-${commentId}`);
+            const editTextarea = document.getElementById(`editComment-${commentId}`);
+            const saveButton = document.getElementById(`saveButton-${commentId}`);
+
+            commentText.classList.add("hidden");
+            editTextarea.classList.remove("hidden");
+            saveButton.classList.remove("hidden");
+        }
+
+        function saveComment(postId, commentId) {
+            const editTextarea = document.getElementById(`editComment-${commentId}`);
+            const newText = editTextarea.value.trim();
+
+            if (newText) {
+                const commentIndex = postInteractions[postId].comments.findIndex(
+                    (comment) => comment.id === commentId
+                );
+                postInteractions[postId].comments[commentIndex].text = newText;
+                localStorage.setItem("postInteractions", JSON.stringify(postInteractions));
+                renderPosts();
+                Swal.fire("Bình luận đã được cập nhật!");
+            }
+        }
+
+        function deleteComment(postId, commentId) {
+            postInteractions[postId].comments = postInteractions[postId].comments.filter(
+                (comment) => comment.id !== commentId
+            );
+            localStorage.setItem("postInteractions", JSON.stringify(postInteractions));
+            renderPosts();
+            Swal.fire("Bình luận đã được xóa!");
+        }
+
+        // Tải dữ liệu khi trang được mở
+        window.addEventListener("load", function () {
+            // Khởi tạo postInteractions từ localStorage
+            let postInteractions = JSON.parse(localStorage.getItem("postInteractions"), reviver) || {};
+
+            // Đảm bảo mỗi bài viết đều có entry trong postInteractions
+            const posts = JSON.parse(localStorage.getItem("posts")) || [];
+            posts.forEach((post) => {
+                if (!postInteractions[post.id]) {
+                    postInteractions[post.id] = {
+                        likes: new Set(),
+                        comments: [], // Đảm bảo comments là một mảng
+                    };
+                }
+            });
+
+            // Lưu lại postInteractions đã được cập nhật
+            localStorage.setItem("postInteractions", JSON.stringify(postInteractions, replacer));
+
+            // Các hàm khác
+            checkLoginStatus();
+            renderPosts();
+            renderTiers();
+            renderBannerAvatarInfo();
+        });
+
+        // Thêm hàm replacer để xử lý Set khi lưu vào localStorage
+        function replacer(key, value) {
+            if(value instanceof Set) {
+                return {
+                    dataType: 'Set',
+                    value: Array.from(value)
+                };
+            }
+            return value;
+        }
+
+        // Thêm reviver khi parse từ localStorage
+        postInteractions = JSON.parse(localStorage.getItem("postInteractions"), (key, value) => {
+            if (typeof value === 'object' && value !== null && value.dataType === 'Set') {
+                return new Set(value.value);
+            }
+            return value;
+        }) || {};
+
+        // Hàm replacer để xử lý Set khi lưu vào localStorage
+        function replacer(key, value) {
+            if (value instanceof Set) {
+                return {
+                    dataType: 'Set',
+                    value: Array.from(value),
+                };
+            }
+            return value;
+        }
+
+        // Hàm reviver để chuyển đổi mảng thành Set khi đọc từ localStorage
+        function reviver(key, value) {
+            if (typeof value === 'object' && value !== null && value.dataType === 'Set') {
+                return new Set(value.value);
+            }
+            return value;
+        }
+        
+    </script>
+</body>
+</html>
